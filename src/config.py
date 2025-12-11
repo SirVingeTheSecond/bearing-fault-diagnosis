@@ -1,105 +1,186 @@
-"""
-Configuration for CWRU Bearing Fault Diagnosis Experiments.
 
-Centralizes hyperparameters and dataset configurations to ensure
-reproducibility across different experimental setups.
-"""
+# Device is determined at runtime to avoid requiring torch at import
+DEVICE = None  # Set by get_device() in utils.py
 
-import torch
+# Seeds for multi-run experiments
+# METHODOLOGY NOTE: Other papers recommend 5-30 seeds for reliability
+# - Benchmark paper: 30 seeds
+# - ECMCTP: 10 experiments averaged
+# - CNN-LSTM: 5-fold CV
+SEEDS = [42, 123, 456, 789, 1024, 2048, 3072, 4096, 5120, 6144]
+DEFAULT_SEED = 42
 
-config = {
-    # Hardware
-    "device": "cuda" if torch.cuda.is_available() else "cpu",
-    "seed": 42,
+DATA_DIR = "data/raw"
+RESULTS_DIR = "results"
+FIGURES_DIR = "figures"
 
-    # Signal processing
-    # 2048 samples at 12kHz captures approximately 170ms per window
-    "window_size": 2048,
-    # 512 stride gives 75% overlap, matching literature practices
-    # Papers typically use 50-75% overlap, NOT 97%
-    "stride": 512,
+# =============================================================================
+# Signal processing
+# =============================================================================
 
-    # Feature extraction mode: "time", "fft", or "both"
-    "feature_mode": "fft",
+WINDOW_SIZE = 2048
+STRIDE = 512  # 75% overlap
+SAMPLING_RATE = 12000  # Hz
 
-    # Classification setup
-    # 4class groups severities by fault type for generalization testing
-    "classification_mode": "4class",
-    "class_names": ["Normal", "Ball", "IR", "OR"],
-    "class_names_10": [
+# Feature extraction: "time", "fft", "both"
+FEATURE_MODE = "fft"
+
+# =============================================================================
+# Dataset structure
+# =============================================================================
+
+MOTOR_LOADS = ["1772", "1750", "1730"]
+FAULT_SIZES = ["007", "014", "021"]
+TEST_FAULT_SIZE = "014"  # Held out for generalization test
+
+# File mapping: (filename_template, class_name, fault_size, 4class_idx, 10class_idx, multilabel)
+def get_file_mapping(load: str) -> list:
+    """Return file mapping for a motor load."""
+    return [
+        (f"{load}_Normal.npz", "Normal", None, 0, 0, [0, 0, 0]),
+        (f"{load}_B_7_DE12.npz", "Ball_007", "007", 1, 1, [1, 0, 0]),
+        (f"{load}_B_14_DE12.npz", "Ball_014", "014", 1, 2, [1, 0, 0]),
+        (f"{load}_B_21_DE12.npz", "Ball_021", "021", 1, 3, [1, 0, 0]),
+        (f"{load}_IR_7_DE12.npz", "IR_007", "007", 2, 4, [0, 1, 0]),
+        (f"{load}_IR_14_DE12.npz", "IR_014", "014", 2, 5, [0, 1, 0]),
+        (f"{load}_IR_21_DE12.npz", "IR_021", "021", 2, 6, [0, 1, 0]),
+        (f"{load}_OR@6_7_DE12.npz", "OR_007", "007", 3, 7, [0, 0, 1]),
+        (f"{load}_OR@6_14_DE12.npz", "OR_014", "014", 3, 8, [0, 0, 1]),
+        (f"{load}_OR@6_21_DE12.npz", "OR_021", "021", 3, 9, [0, 0, 1]),
+    ]
+
+# =============================================================================
+# Classification modes
+# =============================================================================
+
+CLASS_NAMES = {
+    "4class": ["Normal", "Ball", "IR", "OR"],
+    "10class": [
         "Normal",
         "Ball_007", "Ball_014", "Ball_021",
         "IR_007", "IR_014", "IR_021",
-        "OR_007", "OR_014", "OR_021"
+        "OR_007", "OR_014", "OR_021",
     ],
-    "num_classes": 4,
+    "multilabel": ["Ball", "IR", "OR"],
+}
 
-    # Dataset structure
-    "available_loads": ["1772", "1750", "1730"],
+NUM_CLASSES = {
+    "4class": 4,
+    "10class": 10,
+    "multilabel": 3,
+}
 
-    # Split strategy options:
-    # - random: standard split with chunk-based leakage prevention
-    # - fault_size: hold out one severity for testing (single load)
-    # - fault_size_all_loads: hold out one severity using all loads
-    # - cross_load: train on one load and test on different loads
-    "split_strategy": "random",
+# =============================================================================
+# Training hyperparameters
+# =============================================================================
 
-    # Fault-size split settings
-    "test_fault_size": "014",
+BATCH_SIZE = 64
+EPOCHS = 100
+LEARNING_RATE = 1e-3
+WEIGHT_DECAY = 1e-4
+DROPOUT = 0.3
 
-    # Cross-load split settings
-    "cross_load_train": ["1772"],
-    "cross_load_test": ["1750", "1730"],
+EARLY_STOPPING_PATIENCE = 15
+EARLY_STOPPING_MIN_DELTA = 0.001
 
-    # Training hyperparameters
-    "batch_size": 64,
-    "epochs": 50,
+# Studies can be seen declarative specifications of experiments to run.
+# Each study defines what combinations to test.
+#
+# METHODOLOGY NOTE (from other papers):
+# - For fault_size splits: validation set is empty, no early stopping
+# - Report mean +- std across seeds (the idea is to test the reliability)
 
-    # LSTM requires higher learning rate due to gradient flow challenges
-    "learning_rates": {
-        "cnn1d": 1e-3,
-        "cnn1d_deep": 5e-4,
-        "lstm": 1e-2,
-        "cnnlstm": 1e-3,
+STUDIES = {
+    # Main comparison study for the paper
+    "comparison": {
+        "description": "Full comparison of models across configurations (5 seeds)",
+        "models": ["cnn", "lstm", "cnnlstm"],
+        "configurations": [
+            {"mode": "4class", "split": "random", "name": "4class_random"},
+            {"mode": "4class", "split": "fault_size_all_loads", "name": "4class_fault_size"},
+            {"mode": "4class", "split": "cross_load", "name": "4class_cross_load"},
+            {"mode": "10class", "split": "random", "name": "10class_random"},
+            {"mode": "multilabel", "split": "random", "name": "multilabel_random"},
+            {"mode": "multilabel", "split": "fault_size_all_loads", "name": "multilabel_fault_size"},
+        ],
+        "seeds": [42, 123, 456, 789, 1024],
+        "epochs": 100,
     },
 
-    # Regularization
-    "weight_decay": 1e-4,
-    "dropout": 0.3,
+    # A study with 10 seeds
+    "comparison_full": {
+        "description": "Full comparison with 10 seeds for statistical reliability",
+        "models": ["cnn", "lstm", "cnnlstm"],
+        "configurations": [
+            {"mode": "4class", "split": "random", "name": "4class_random"},
+            {"mode": "4class", "split": "fault_size_all_loads", "name": "4class_fault_size"},
+            {"mode": "4class", "split": "cross_load", "name": "4class_cross_load"},
+            {"mode": "10class", "split": "random", "name": "10class_random"},
+            {"mode": "multilabel", "split": "random", "name": "multilabel_random"},
+            {"mode": "multilabel", "split": "fault_size_all_loads", "name": "multilabel_fault_size"},
+        ],
+        "seeds": [42, 123, 456, 789, 1024, 2048, 3072, 4096, 5120, 6144],
+        "epochs": 100,
+    },
 
-    # Early stopping prevents overfitting while allowing convergence
-    "early_stopping_patience": 10,
-    "early_stopping_min_delta": 0.001,
+    # Quick test to verify setup
+    "quick_test": {
+        "description": "Quick validation run",
+        "models": ["cnn"],
+        "configurations": [
+            {"mode": "4class", "split": "fault_size_all_loads", "name": "4class_fault_size"},
+        ],
+        "seeds": [42],
+        "epochs": 10,
+    },
 
-    # Data augmentation
-    "augmentation": {
-        "enabled": True,
-        "noise_std": 0.05,
-        "scale_range": (0.9, 1.1),
-        "time_shift_max": 50,
+    # Generalization study (fault-size and cross-load splits)
+    "generalization": {
+        "description": "Focus on generalization performance (5 seeds)",
+        "models": ["cnn", "lstm", "cnnlstm"],
+        "configurations": [
+            {"mode": "4class", "split": "fault_size_all_loads", "name": "4class_fault_size"},
+            {"mode": "4class", "split": "cross_load", "name": "4class_cross_load"},
+            {"mode": "multilabel", "split": "fault_size_all_loads", "name": "multilabel_fault_size"},
+        ],
+        "seeds": [42, 123, 456, 789, 1024],
+        "epochs": 100,
+    },
+
+    # Fault-size study with K-fold CV
+    "fault_size_kfold": {
+        "description": "Fault-size generalization with K-fold CV for epoch selection (arXiv 2407.14625)",
+        "models": ["cnn", "lstm", "cnnlstm"],
+        "configurations": [
+            {"mode": "4class", "split": "fault_size_all_loads", "name": "4class_fault_size"},
+            {"mode": "multilabel", "split": "fault_size_all_loads", "name": "multilabel_fault_size"},
+        ],
+        "seeds": [42, 123, 456, 789, 1024],
+        "epochs": 100,  # Max epochs for k-fold CV
+        "use_kfold_cv": True,
+        "n_folds": 3,
     },
 }
 
+# =============================================================================
+# Hyperparameter search
+# =============================================================================
 
-def get_file_mapping(load: str) -> list:
-    """
-    Return dataset file mapping for a specific motor load.
-
-    Args:
-        load: Motor load identifier (1772, 1750, or 1730)
-
-    Returns:
-        List of tuples containing (filename, class_name, fault_size, class_idx)
-    """
-    return [
-        (f"{load}_Normal.npz", "Normal", None, 0),
-        (f"{load}_B_7_DE12.npz", "Ball_007", "007", 1),
-        (f"{load}_B_14_DE12.npz", "Ball_014", "014", 1),
-        (f"{load}_B_21_DE12.npz", "Ball_021", "021", 1),
-        (f"{load}_IR_7_DE12.npz", "IR_007", "007", 2),
-        (f"{load}_IR_14_DE12.npz", "IR_014", "014", 2),
-        (f"{load}_IR_21_DE12.npz", "IR_021", "021", 2),
-        (f"{load}_OR@6_7_DE12.npz", "OR_007", "007", 3),
-        (f"{load}_OR@6_14_DE12.npz", "OR_014", "014", 3),
-        (f"{load}_OR@6_21_DE12.npz", "OR_021", "021", 3),
-    ]
+SWEEPS = {
+    "hyperparameter_search": {
+        "description": "Grid search for optimal hyperparameters",
+        "base_config": {
+            "mode": "4class",
+            "split": "fault_size_all_loads",
+        },
+        "param_grid": {
+            "model": ["cnn", "lstm", "cnnlstm"],
+            "lr": [1e-4, 5e-4, 1e-3],
+            "dropout": [0.2, 0.3, 0.5],
+            "weight_decay": [0, 1e-4, 1e-3],
+        },
+        "screening_epochs": 20,
+        "screening_threshold": 0.45,
+        "full_epochs": 100,
+    },
+}
