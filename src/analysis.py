@@ -4,8 +4,9 @@ from collections import defaultdict
 
 import numpy as np
 
-import config
-from experiment import list_experiments, load_experiment, parse_experiment_name
+from . import config
+from .experiment import list_experiments, load_experiment, parse_experiment_name
+from .utils import print_separator
 
 
 def load_study_results(study_name: str) -> list:
@@ -42,30 +43,31 @@ def aggregate_results(results: list) -> dict:
         model = parsed.get("model") or r.get("model")
         config_name = parsed.get("config") or f"{r.get('mode')}_{r.get('split')}"
 
-        # Extract metrics
         test_metrics = r.get("test_metrics", {})
 
         if "accuracy" in test_metrics:
             aggregated[config_name][model]["accuracy"].append(test_metrics["accuracy"])
 
             # Per-class recall
-            for cls, recall in test_metrics.get("per_class_recall", {}).items():
-                aggregated[config_name][model][f"recall_{cls}"].append(recall)
+            for cls, metrics in test_metrics.get("per_class_metrics", {}).items():
+                if isinstance(metrics, dict):
+                    aggregated[config_name][model][f"recall_{cls}"].append(metrics.get("recall", 0))
+                    aggregated[config_name][model][f"f1_{cls}"].append(metrics.get("f1", 0))
 
-        if "auroc" in test_metrics:
-            aurocs = test_metrics["auroc"]
-            aggregated[config_name][model]["macro_auroc"].append(aurocs.get("macro", np.nan))
+        if "macro_auroc" in test_metrics:
+            aggregated[config_name][model]["macro_auroc"].append(test_metrics["macro_auroc"])
 
-            for cls in config.CLASS_NAMES["multilabel"]:
-                if cls in aurocs:
-                    aggregated[config_name][model][f"auroc_{cls}"].append(aurocs[cls])
+            # Per-class AUROC
+            for cls, metrics in test_metrics.get("per_class_metrics", {}).items():
+                if isinstance(metrics, dict) and "auroc" in metrics:
+                    aggregated[config_name][model][f"auroc_{cls}"].append(metrics["auroc"])
 
     return aggregated
 
 
 def compute_statistics(aggregated: dict) -> dict:
     """
-    Compute mean +- std for aggregated results.
+    Compute mean +- std for the aggregated results.
     
     Returns:
         {config_name: {model: {metric: {"mean": x, "std": y, "n": n}}}}
@@ -151,7 +153,8 @@ def print_summary_table(study_name: str, stats: dict = None):
 
                 print(f"  {model.upper():<12} {macro_str:<18} {aurocs[0]:<15} {aurocs[1]:<15} {aurocs[2]:<15}")
 
-    print("\n" + "=" * 90)
+    print()
+    print_separator(width=90)  # Wider for table formatting
 
 
 def export_results(study_name: str, output_path: str = None):

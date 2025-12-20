@@ -6,7 +6,8 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import KFold
 
-import config
+from . import config
+from .utils import print_section
 
 
 class EarlyStopping:
@@ -57,6 +58,20 @@ def get_criterion(mode: str) -> nn.Module:
         return nn.CrossEntropyLoss()
 
 
+def _compute_correct(outputs, labels, mode):
+    """
+    Compute number of correct predictions.
+    
+    Extracted to follow DRY principle - used by both train_epoch and evaluate_epoch.
+    """
+    if mode == "multilabel":
+        preds = (torch.sigmoid(outputs) > 0.5).float()
+        return (preds == labels).all(dim=1).sum().item()
+    else:
+        preds = outputs.argmax(dim=1)
+        return (preds == labels).sum().item()
+
+
 def train_epoch(model, loader, criterion, optimizer, device, mode):
     """Run one training epoch."""
     model.train()
@@ -78,14 +93,7 @@ def train_epoch(model, loader, criterion, optimizer, device, mode):
 
         total_loss += loss.item() * inputs.size(0)
         total += inputs.size(0)
-
-        # Compute accuracy
-        if mode == "multilabel":
-            preds = (torch.sigmoid(outputs) > 0.5).float()
-            correct += (preds == labels).all(dim=1).sum().item()
-        else:
-            preds = outputs.argmax(dim=1)
-            correct += (preds == labels).sum().item()
+        correct += _compute_correct(outputs, labels, mode)
 
     return total_loss / total, correct / total
 
@@ -106,13 +114,7 @@ def evaluate_epoch(model, loader, criterion, device, mode):
 
             total_loss += loss.item() * inputs.size(0)
             total += inputs.size(0)
-
-            if mode == "multilabel":
-                preds = (torch.sigmoid(outputs) > 0.5).float()
-                correct += (preds == labels).all(dim=1).sum().item()
-            else:
-                preds = outputs.argmax(dim=1)
-                correct += (preds == labels).sum().item()
+            correct += _compute_correct(outputs, labels, mode)
 
     return total_loss / total, correct / total
 
@@ -152,7 +154,7 @@ def train(
     if weight_decay is None:
         weight_decay = config.WEIGHT_DECAY
     if device is None:
-        from utils import get_device
+        from .utils import get_device
         device = get_device()
 
     model = model.to(device)
@@ -172,8 +174,9 @@ def train(
     }
 
     best_val_acc = 0.0
+    best_train_loss = float('inf')  # For tracking best when no validation
     best_epoch = 0
-    best_state = None # Well...
+    best_state = None  # Track best model for non-early-stopping case
 
     for epoch in range(1, epochs + 1):
         train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device, mode)
@@ -193,13 +196,19 @@ def train(
         history["val_acc"].append(val_acc)
         history["lr"].append(current_lr)
 
-        if use_early_stopping and val_acc > best_val_acc:
-            best_val_acc = val_acc
-            best_epoch = epoch
-        elif not use_early_stopping and train_acc > best_val_acc:
-            # Without validation, track best training (less meaningful)
-            best_val_acc = train_acc
-            best_epoch = epoch
+        # Track best model
+        if use_early_stopping:
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                best_epoch = epoch
+            # Note: EarlyStopping class handles saving best state based on val_loss
+        else:
+            # Without validation, track best based on lowest training loss
+            if train_loss < best_train_loss:
+                best_train_loss = train_loss
+                best_val_acc = train_acc  # Store train_acc in this field for consistency
+                best_epoch = epoch
+                best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
 
         if verbose:
             if use_early_stopping:
@@ -208,18 +217,24 @@ def train(
                       f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f} | "
                       f"LR: {current_lr:.2e}")
             else:
+                best_marker = " *" if epoch == best_epoch else ""
                 print(f"Epoch {epoch:3d}/{epochs} | "
                       f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f} | "
-                      f"LR: {current_lr:.2e}")
+                      f"LR: {current_lr:.2e}{best_marker}")
 
         if early_stopping is not None and early_stopping(val_loss, model):
             if verbose:
                 print(f"Early stopping at epoch {epoch}")
             break
 
-    # Restore best model if we used early stopping
+    # Restore best model
     if early_stopping is not None:
         early_stopping.restore_best(model)
+    elif best_state is not None:
+        # Restore best model for non-early-stopping case
+        model.load_state_dict(best_state)
+        if verbose:
+            print(f"Restored best model from epoch {best_epoch}")
 
     return {
         "history": history,
@@ -279,7 +294,7 @@ def train_kfold_cv(
     if weight_decay is None:
         weight_decay = config.WEIGHT_DECAY
     if device is None:
-        from utils import get_device
+        from .utils import get_device
         device = get_device()
     if seed is None:
         seed = config.DEFAULT_SEED
@@ -290,7 +305,7 @@ def train_kfold_cv(
     
     for fold_idx, (train_idx, val_idx) in enumerate(kf.split(range(len(train_dataset)))):
         if verbose:
-            print(f"\n--- Fold {fold_idx + 1}/{n_folds} ---")
+            print_section(f"Fold {fold_idx + 1}/{n_folds}")
         
         # Create fold data loaders
         train_subset = Subset(train_dataset, train_idx)

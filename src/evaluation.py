@@ -8,7 +8,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-import config
+from . import config
 
 
 def get_predictions(model, loader, device, mode):
@@ -177,24 +177,8 @@ def evaluate(model, loader, device, mode) -> dict:
 # Noise testing (VERY EXPERIMENTAL)
 # =============================================================================
 
-def add_gaussian_noise(signal: np.ndarray, snr_db: float) -> np.ndarray:
-    """
-    Add Gaussian white noise to signal at specified SNR level.
-
-    Based on found papers (from TF-MDA and ECMTP, I should remember to cite these later).
-    
-    Args:
-        signal: Input signal array
-        snr_db: Signal-to-noise ratio in decibels
-        
-    Returns:
-        Noisy signal
-    """
-    signal_power = np.mean(signal ** 2)
-    snr_linear = 10 ** (snr_db / 10)
-    noise_power = signal_power / snr_linear
-    noise = np.random.normal(0, np.sqrt(noise_power), signal.shape)
-    return signal + noise
+# Import from augmentation.py to avoid code duplication (DRY principle)
+from .augmentation import add_gaussian_noise
 
 
 def add_noise_to_batch(X: np.ndarray, snr_db: float) -> np.ndarray:
@@ -232,7 +216,7 @@ def evaluate_noise_robustness(
     Returns:
         Dictionary with metrics at each noise level
     """
-    from data import SignalDataset
+    from .data import SignalDataset
     from torch.utils.data import DataLoader
     
     if snr_levels is None:

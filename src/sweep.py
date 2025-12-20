@@ -3,15 +3,15 @@ import json
 import itertools
 from datetime import datetime
 
-import numpy as np
 import torch
 
-import config
-from data import load_data, create_dataloaders
-from models import create_model, count_parameters
+from . import config
+from .data import load_data, create_dataloaders
+from .models import create_model
+from utils import count_parameters
 from training import train, get_criterion, train_epoch, evaluate_epoch, EarlyStopping
-from evaluation import evaluate
-from utils import set_seed, get_device
+from .evaluation import evaluate
+from .utils import set_seed, get_device
 
 
 def get_sweep_dir(sweep_name: str) -> str:

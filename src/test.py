@@ -4,11 +4,11 @@ import json
 import numpy as np
 import torch
 
-import config
-from data import load_data, create_dataloaders
-from models import create_model, count_parameters
-from evaluation import evaluate, get_predictions
-from utils import get_device
+from . import config
+from .data import load_data, create_dataloaders
+from .models import create_model
+from .evaluation import evaluate, get_predictions
+from .utils import get_device, count_parameters, print_section, print_separator
 
 
 def load_checkpoint(checkpoint_path: str) -> tuple:
@@ -51,7 +51,7 @@ def print_confusion_matrix(cm: np.ndarray, class_names: list):
     n = len(class_names)
     
     # Header
-    header = "          " + "".join(f"{name:>10}" for name in class_names)
+    header = "          " + "".join(f"{name:>10}" for name in class_names)  # Pretty scuffed lol
     print(header)
     print("-" * len(header))
     
@@ -64,7 +64,7 @@ def print_confusion_matrix(cm: np.ndarray, class_names: list):
 def print_conditional_probabilities(cm: np.ndarray, class_names: list):
     """Print P(predicted | true) for each class."""
     print("\nConditional Probabilities P(predicted | true):")
-    print("-" * 50)
+    print_separator(char="-", width=50)
     
     for i, true_name in enumerate(class_names):
         row_sum = cm[i].sum()
@@ -169,7 +169,7 @@ def compare_splits(checkpoint_path: str):
     results = {}
     
     for split in splits:
-        print(f"\n--- {split} ---")
+        print_section(split)
         try:
             metrics = test_checkpoint(checkpoint_path, split=split, verbose=False)
             

@@ -2,12 +2,12 @@ import argparse
 import os
 import sys
 
-import config
+from . import config
 
 
 def cmd_run(args):
     """Run a study."""
-    from runner import run_study
+    from .runner import run_study
 
     if args.study not in config.STUDIES:
         print(f"Error: Unknown study '{args.study}'")
@@ -19,14 +19,14 @@ def cmd_run(args):
 
 def cmd_analyze(args):
     """Analyze results from a given study."""
-    from analysis import analyze
+    from .analysis import analyze
 
     analyze(args.study)
 
 
 def cmd_export(args):
     """Export results to file."""
-    from analysis import export_csv, generate_typst_table, export_results
+    from .analysis import export_csv, generate_typst_table, export_results
 
     if args.format == "csv":
         export_csv(args.study)
@@ -45,8 +45,8 @@ def cmd_export(args):
 
 def cmd_figures(args):
     """Generate figures for study."""
-    from analysis import load_study_results, aggregate_results, compute_statistics
-    from visualization import generate_all_figures
+    from .analysis import load_study_results, aggregate_results, compute_statistics
+    from .visualization import generate_all_figures
 
     results = load_study_results(args.study)
     if not results:
@@ -60,7 +60,7 @@ def cmd_figures(args):
 
 def cmd_sweep(args):
     """Run hyperparameter search."""
-    from sweep import run_sweep
+    from .sweep import run_sweep
 
     if args.sweep not in config.SWEEPS:
         print(f"Error: Unknown sweep '{args.sweep}'")
@@ -72,7 +72,7 @@ def cmd_sweep(args):
 
 def cmd_sweep_results(args):
     """Show sweep results."""
-    from sweep import print_sweep_leaderboard
+    from .sweep import print_sweep_leaderboard
 
     print_sweep_leaderboard(args.sweep, top_n=args.top)
 
@@ -108,7 +108,7 @@ def cmd_list(args):
 
 def cmd_status(args):
     """Show study completion status."""
-    from experiment import list_experiments, get_experiment_dir, experiment_exists
+    from .experiment import list_experiments, get_experiment_dir, experiment_exists
 
     study = config.STUDIES.get(args.study)
     if study is None:
@@ -142,7 +142,7 @@ def cmd_status(args):
 
 def cmd_train(args):
     """Run single experiment."""
-    from runner import run_single_experiment
+    from .runner import run_single_experiment
 
     run_single_experiment(
         study_name="manual",
@@ -159,7 +159,7 @@ def cmd_train(args):
 
 def cmd_test(args):
     """Evaluate a saved checkpoint."""
-    from test import test_checkpoint, compare_splits
+    from .test import test_checkpoint, compare_splits
 
     if args.compare_splits:
         compare_splits(args.checkpoint)

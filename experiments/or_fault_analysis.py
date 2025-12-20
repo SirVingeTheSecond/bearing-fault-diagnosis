@@ -1,9 +1,27 @@
+"""
+OR Fault Severity Non-Monotonicity Analysis.
+
+Analyzes why OR fault fails to generalize across severity levels.
+Generates publication-ready figures explaining the root cause.
+
+Usage:
+    python experiments/or_fault_analysis.py
+    python experiments/or_fault_analysis.py --output_dir results/figures
+"""
+
 import argparse
 import os
+import sys
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Set some defaults
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src import config
+
+# Plot configuration
 plt.rcParams.update({
     'font.size': 11,
     'font.family': 'sans-serif',
@@ -23,14 +41,14 @@ plt.rcParams.update({
 
 # Color scheme
 COLORS = {
-    'Ball': '#2ecc71',      # Green
-    'IR': '#3498db',        # Blue
-    'OR': '#e74c3c',        # Red
-    '007': '#3498db',       # Blue
-    '014': '#e74c3c',       # Red
-    '021': '#27ae60',       # Green
-    'monotonic': '#27ae60', # Green
-    'non_monotonic': '#e74c3c',  # Red
+    'Ball': '#2ecc71',
+    'IR': '#3498db',
+    'OR': '#e74c3c',
+    '007': '#3498db',
+    '014': '#e74c3c',
+    '021': '#27ae60',
+    'monotonic': '#27ae60',
+    'non_monotonic': '#e74c3c',
 }
 
 # =============================================================================
@@ -58,7 +76,7 @@ FILE_PATTERNS = {
 
 
 # =============================================================================
-# Feature Extraction (matching data.py)
+# Feature Extraction
 # =============================================================================
 
 def extract_windows(signal: np.ndarray, window_size: int, stride: int) -> np.ndarray:
@@ -156,7 +174,7 @@ def compute_monotonicity_ratio(features: dict, fault_type: str) -> dict:
 
 
 # =============================================================================
-# Analysis Functions
+# Analysis
 # =============================================================================
 
 def analyze_all(features: dict) -> dict:
@@ -189,7 +207,7 @@ def print_results(results: dict) -> None:
     print("MONOTONICITY ANALYSIS")
     print("=" * 70)
     print("\nRatio = (d_007_014 + d_014_021) / d_007_021")
-    print("Ratio ≈ 1.0: monotonic | Ratio >> 1.0: non-monotonic")
+    print("Ratio ~ 1.0: monotonic | Ratio >> 1.0: non-monotonic")
     print("-" * 70)
 
     for fault_type in FAULT_TYPES:
@@ -207,98 +225,119 @@ def print_results(results: dict) -> None:
     for name, dist in sorted_dist:
         marker = ""
         if name in ["OR_007", "OR_021"]:
-            marker = " ← TRAIN"
-        elif name == "IR_014":
-            marker = " ← CLOSEST OTHER TYPE"
-        print(f"  {name:<12}: {dist:.2f}{marker}")
+            marker = " <- TRAIN"
+        elif name == "OR_014":
+            marker = " <- TEST (target)"
+        print(f"  {name:12}: {dist:.2f}{marker}")
 
 
 # =============================================================================
-# Publication-Quality Visualizations
+# Plotting
 # =============================================================================
 
 def plot_main_figure(features: dict, results: dict, output_dir: str) -> None:
-    """Generate main analysis figure with 4 panels."""
-    fig = plt.figure(figsize=(14, 10))
+    """Generate main 5-panel analysis figure."""
+    fig = plt.figure(figsize=(16, 10))
 
-    # Create grid: 2 rows, with top row having 3 columns, bottom row having 2 columns
-    gs = fig.add_gridspec(2, 6, hspace=0.3, wspace=0.4)
+    # Panel A: Monotonicity ratios
+    ax = fig.add_subplot(2, 3, 1)
+    fault_types = FAULT_TYPES
+    ratios = [results['monotonicity'][ft]['ratio'] for ft in fault_types]
+    colors_ratio = [COLORS['monotonic'] if r < 1.5 else COLORS['non_monotonic'] for r in ratios]
 
-    ax1 = fig.add_subplot(gs[0, 0:2])  # Ball spectrum
-    ax2 = fig.add_subplot(gs[0, 2:4])  # IR spectrum
-    ax3 = fig.add_subplot(gs[0, 4:6])  # OR spectrum
-    ax4 = fig.add_subplot(gs[1, 0:3])  # Monotonicity ratios
-    ax5 = fig.add_subplot(gs[1, 3:6])  # Cross-class distances
-
-    # Panel A-C: Mean FFT Spectra
-    axes_spectra = [ax1, ax2, ax3]
-    for idx, fault_type in enumerate(FAULT_TYPES):
-        ax = axes_spectra[idx]
-        for severity in SEVERITIES:
-            mean_spectrum = np.mean(features[fault_type][severity], axis=0)
-            color = COLORS[severity]
-            linestyle = '-' if severity != '014' else '--'
-            linewidth = 1.5 if severity != '014' else 2.0
-            ax.plot(mean_spectrum, label=severity, color=color,
-                   linestyle=linestyle, linewidth=linewidth, alpha=0.85)
-
-        ax.set_title(f"{fault_type} Fault", fontweight='bold')
-        ax.set_xlabel("Frequency Bin")
-        ax.set_ylabel("Log Magnitude (norm.)")
-        ax.legend(title="Severity", loc='upper right', framealpha=0.9)
-        ax.set_xlim(0, len(mean_spectrum))
-        ax.grid(True, alpha=0.3, linestyle=':')
-
-        # Add panel label
-        ax.text(-0.12, 1.05, chr(65 + idx), transform=ax.transAxes,
-               fontsize=14, fontweight='bold', va='top')
-
-    # Panel D: Monotonicity Ratios
-    ax = ax4
-    ratios = [results['monotonicity'][ft]['ratio'] for ft in FAULT_TYPES]
-    colors_bar = [COLORS[ft] for ft in FAULT_TYPES]
-
-    bars = ax.bar(FAULT_TYPES, ratios, color=colors_bar, edgecolor='black',
-                  linewidth=1.2, alpha=0.85, width=0.6)
-
-    # Add threshold line
-    ax.axhline(y=1.0, color='black', linestyle='--', linewidth=1.5,
-              label='Perfect monotonicity', zorder=1)
-
-    # Add value labels on bars
-    for bar, ratio, ft in zip(bars, ratios, FAULT_TYPES):
-        height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, height + 0.05,
-               f'{ratio:.2f}', ha='center', va='bottom',
-               fontsize=11, fontweight='bold')
-
+    bars = ax.bar(fault_types, ratios, color=colors_ratio, edgecolor='black', linewidth=1.2)
+    ax.axhline(y=1.0, color='gray', linestyle='--', linewidth=1.5, label='Ideal (monotonic)')
     ax.set_ylabel("Monotonicity Ratio")
-    ax.set_title("Severity Non-Monotonicity by Fault Type", fontweight='bold')
-    ax.set_ylim(0, 2.5)
-    ax.legend(loc='upper left', framealpha=0.9)
-    ax.grid(True, alpha=0.3, linestyle=':', axis='y')
+    ax.set_title("Severity Progression Monotonicity", fontweight='bold')
+    ax.legend(loc='upper left')
+
+    for bar, ratio in zip(bars, ratios):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05,
+                f'{ratio:.2f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    ax.set_ylim(0, max(ratios) + 0.5)
+    ax.text(-0.12, 1.05, 'A', transform=ax.transAxes,
+            fontsize=14, fontweight='bold', va='top')
+
+    # Panel B: Mean spectra comparison (Ball - monotonic)
+    ax = fig.add_subplot(2, 3, 2)
+    for severity in SEVERITIES:
+        mean_spectrum = np.mean(features["Ball"][severity], axis=0)
+        ax.plot(mean_spectrum, label=f"Ball_{severity}", color=COLORS[severity],
+                linewidth=1.5, alpha=0.8)
+    ax.set_xlabel("Frequency Bin")
+    ax.set_ylabel("Log Magnitude (normalized)")
+    ax.set_title("Ball Fault: Monotonic Progression", fontweight='bold')
+    ax.legend(loc='upper right')
+    ax.set_xlim(0, 500)
+    ax.text(-0.12, 1.05, 'B', transform=ax.transAxes,
+            fontsize=14, fontweight='bold', va='top')
+
+    # Panel C: Mean spectra comparison (OR - non-monotonic)
+    ax = fig.add_subplot(2, 3, 3)
+    for severity in SEVERITIES:
+        mean_spectrum = np.mean(features["OR"][severity], axis=0)
+        linestyle = '-' if severity != '014' else '--'
+        linewidth = 1.5 if severity != '014' else 2.5
+        ax.plot(mean_spectrum, label=f"OR_{severity}", color=COLORS[severity],
+                linestyle=linestyle, linewidth=linewidth, alpha=0.8)
+    ax.set_xlabel("Frequency Bin")
+    ax.set_ylabel("Log Magnitude (normalized)")
+    ax.set_title("OR Fault: Non-Monotonic (014 diverges)", fontweight='bold')
+    ax.legend(loc='upper right')
+    ax.set_xlim(0, 500)
+    ax.text(-0.12, 1.05, 'C', transform=ax.transAxes,
+            fontsize=14, fontweight='bold', va='top')
+
+    # Panel D: Distance matrix visualization
+    ax = fig.add_subplot(2, 3, 4)
+    classes = [f"{ft}_{s}" for ft in FAULT_TYPES for s in SEVERITIES]
+    n = len(classes)
+    dist_matrix = np.zeros((n, n))
+
+    all_feats = {}
+    for ft in FAULT_TYPES:
+        for s in SEVERITIES:
+            all_feats[f"{ft}_{s}"] = features[ft][s]
+
+    for i, c1 in enumerate(classes):
+        for j, c2 in enumerate(classes):
+            dist_matrix[i, j] = compute_centroid_distance(all_feats[c1], all_feats[c2])
+
+    im = ax.imshow(dist_matrix, cmap='viridis', aspect='auto')
+    ax.set_xticks(range(n))
+    ax.set_yticks(range(n))
+    ax.set_xticklabels([c.split('_')[1] for c in classes], fontsize=8)
+    ax.set_yticklabels(classes, fontsize=8)
+
+    # Add fault type separators
+    for i in [3, 6]:
+        ax.axhline(y=i-0.5, color='white', linewidth=2)
+        ax.axvline(x=i-0.5, color='white', linewidth=2)
+
+    ax.set_title("Centroid Distance Matrix", fontweight='bold')
+    plt.colorbar(im, ax=ax, label='Distance')
     ax.text(-0.12, 1.05, 'D', transform=ax.transAxes,
-           fontsize=14, fontweight='bold', va='top')
+            fontsize=14, fontweight='bold', va='top')
 
     # Panel E: Cross-class distances from OR_014
-    ax = ax5
+    ax = fig.add_subplot(2, 3, (5, 6))
+    cross_dist = results['cross_class']
 
-    # Get distances and sort
-    distances = results['cross_class']
-    classes_to_show = ['OR_007', 'IR_014', 'OR_021', 'Ball_014', 'IR_007']
-    dists = [distances[c] for c in classes_to_show]
-
-    # Create horizontal bar chart
-    y_pos = np.arange(len(classes_to_show))
+    classes_to_show = ['OR_007', 'OR_021', 'IR_014', 'Ball_014', 'Normal']
+    dists = [cross_dist[c] for c in classes_to_show]
     colors_dist = []
     for c in classes_to_show:
         if c.startswith('OR'):
             colors_dist.append(COLORS['OR'])
         elif c.startswith('IR'):
             colors_dist.append(COLORS['IR'])
-        else:
+        elif c.startswith('Ball'):
             colors_dist.append(COLORS['Ball'])
+        else:
+            colors_dist.append('gray')
 
+    y_pos = np.arange(len(classes_to_show))
     bars = ax.barh(y_pos, dists, color=colors_dist, edgecolor='black',
                    linewidth=1.2, alpha=0.85, height=0.6)
 
@@ -308,7 +347,6 @@ def plot_main_figure(features: dict, results: dict, output_dir: str) -> None:
     ax.set_title("Cross-Class Distances (OR_014 Reference)", fontweight='bold')
     ax.grid(True, alpha=0.3, linestyle=':', axis='x')
 
-    # Add value labels
     for i, (bar, dist) in enumerate(zip(bars, dists)):
         width = bar.get_width()
         label = f'{dist:.1f}'
@@ -319,15 +357,14 @@ def plot_main_figure(features: dict, results: dict, output_dir: str) -> None:
         elif classes_to_show[i] == 'OR_021':
             label += ' (train)'
         ax.text(width + 0.3, bar.get_y() + bar.get_height()/2,
-               label, ha='left', va='center', fontsize=9)
+                label, ha='left', va='center', fontsize=9)
 
     ax.set_xlim(0, max(dists) + 8)
     ax.text(-0.12, 1.05, 'E', transform=ax.transAxes,
-           fontsize=14, fontweight='bold', va='top')
+            fontsize=14, fontweight='bold', va='top')
 
-    # Add figure title
     fig.suptitle("OR Fault Severity Generalization: Root Cause Analysis",
-                fontsize=14, fontweight='bold', y=0.98)
+                 fontsize=14, fontweight='bold', y=0.98)
 
     output_path = os.path.join(output_dir, "or_fault_analysis.png")
     plt.savefig(output_path, dpi=300, facecolor='white', edgecolor='none')
@@ -362,18 +399,18 @@ def plot_severity_progression(features: dict, output_dir: str) -> None:
 
         # Draw direct path (007 -> 021) - dashed gray
         ax.plot([coords['007'][0], coords['021'][0]],
-               [coords['007'][1], coords['021'][1]],
-               color='gray', linestyle='--', linewidth=2, alpha=0.7,
-               label='Direct path (007→021)', zorder=1)
+                [coords['007'][1], coords['021'][1]],
+                color='gray', linestyle='--', linewidth=2, alpha=0.7,
+                label='Direct path (007->021)', zorder=1)
 
         # Draw path through 014 - solid with color
         ax.plot([coords['007'][0], coords['014'][0]],
-               [coords['007'][1], coords['014'][1]],
-               color=COLORS['014'], linestyle='-', linewidth=2, alpha=0.7, zorder=2)
+                [coords['007'][1], coords['014'][1]],
+                color=COLORS['014'], linestyle='-', linewidth=2, alpha=0.7, zorder=2)
         ax.plot([coords['014'][0], coords['021'][0]],
-               [coords['014'][1], coords['021'][1]],
-               color=COLORS['014'], linestyle='-', linewidth=2, alpha=0.7,
-               label='Path through 014', zorder=2)
+                [coords['014'][1], coords['021'][1]],
+                color=COLORS['014'], linestyle='-', linewidth=2, alpha=0.7,
+                label='Path through 014', zorder=2)
 
         # Plot centroids
         markers = {'007': 'o', '014': 'X', '021': 's'}
@@ -382,24 +419,20 @@ def plot_severity_progression(features: dict, output_dir: str) -> None:
         for severity in SEVERITIES:
             x, y = coords[severity]
             ax.scatter(x, y, c=COLORS[severity], s=sizes[severity],
-                      marker=markers[severity], edgecolors='black',
-                      linewidths=1.5, label=severity, zorder=3)
+                       marker=markers[severity], edgecolors='black',
+                       linewidths=1.5, label=severity, zorder=3)
 
         ax.set_xlabel("PC1")
         ax.set_ylabel("PC2")
         ax.set_title(f"{fault_type} Fault", fontweight='bold')
         ax.legend(loc='best', framealpha=0.9, fontsize=9)
         ax.grid(True, alpha=0.3, linestyle=':')
-
-        # Equal aspect ratio
         ax.set_aspect('equal', adjustable='datalim')
-
-        # Panel label
         ax.text(-0.12, 1.05, chr(65 + idx), transform=ax.transAxes,
-               fontsize=14, fontweight='bold', va='top')
+                fontsize=14, fontweight='bold', va='top')
 
     fig.suptitle("Severity Progression in Feature Space (PCA)",
-                fontsize=13, fontweight='bold', y=1.02)
+                 fontsize=13, fontweight='bold', y=1.02)
 
     plt.tight_layout()
     output_path = os.path.join(output_dir, "severity_progression.png")
@@ -420,13 +453,13 @@ def plot_or_detail(features: dict, output_dir: str) -> None:
         linestyle = '-' if severity != '014' else '--'
         linewidth = 1.5 if severity != '014' else 2.5
         ax.plot(mean_spectrum, label=f"OR_{severity}", color=color,
-               linestyle=linestyle, linewidth=linewidth, alpha=0.85)
+                linestyle=linestyle, linewidth=linewidth, alpha=0.85)
 
     # Highlight bin 123
     ax.axvline(x=123, color='red', linestyle=':', linewidth=1.5, alpha=0.7)
     ax.annotate('Bin 123\n(OR_014 only)', xy=(123, 2.8), xytext=(145, 3.2),
-               fontsize=9, ha='left',
-               arrowprops=dict(arrowstyle='->', color='red', lw=1.5))
+                fontsize=9, ha='left',
+                arrowprops=dict(arrowstyle='->', color='red', lw=1.5))
 
     ax.set_xlabel("Frequency Bin")
     ax.set_ylabel("Log Magnitude (normalized)")
@@ -435,7 +468,7 @@ def plot_or_detail(features: dict, output_dir: str) -> None:
     ax.grid(True, alpha=0.3, linestyle=':')
     ax.set_xlim(0, 200)
     ax.text(-0.1, 1.05, 'A', transform=ax.transAxes,
-           fontsize=14, fontweight='bold', va='top')
+            fontsize=14, fontweight='bold', va='top')
 
     # Panel B: Full spectrum comparison
     ax = axes[1]
@@ -445,7 +478,7 @@ def plot_or_detail(features: dict, output_dir: str) -> None:
         linestyle = '-' if severity != '014' else '--'
         linewidth = 1.2 if severity != '014' else 2.0
         ax.plot(mean_spectrum, label=f"OR_{severity}", color=color,
-               linestyle=linestyle, linewidth=linewidth, alpha=0.85)
+                linestyle=linestyle, linewidth=linewidth, alpha=0.85)
 
     ax.set_xlabel("Frequency Bin")
     ax.set_ylabel("Log Magnitude (normalized)")
@@ -453,10 +486,10 @@ def plot_or_detail(features: dict, output_dir: str) -> None:
     ax.legend(loc='upper right', framealpha=0.9)
     ax.grid(True, alpha=0.3, linestyle=':')
     ax.text(-0.1, 1.05, 'B', transform=ax.transAxes,
-           fontsize=14, fontweight='bold', va='top')
+            fontsize=14, fontweight='bold', va='top')
 
     fig.suptitle("OR_014 Unique Spectral Characteristics",
-                fontsize=13, fontweight='bold', y=1.02)
+                 fontsize=13, fontweight='bold', y=1.02)
 
     plt.tight_layout()
     output_path = os.path.join(output_dir, "or_spectral_detail.png")
@@ -471,24 +504,28 @@ def plot_or_detail(features: dict, output_dir: str) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="OR Fault Severity Analysis")
-    parser.add_argument("--data_dir", type=str, required=True,
-                        help="Path to CWRU data directory")
-    parser.add_argument("--output_dir", type=str, default=".",
-                        help="Output directory for plots")
+    parser.add_argument("--data_dir", type=str, default=None,
+                        help="Path to CWRU data (default: config.DATA_DIR)")
+    parser.add_argument("--output_dir", type=str, default=None,
+                        help="Output directory for plots (default: figures/comparison)")
     args = parser.parse_args()
 
-    if not os.path.exists(args.data_dir):
-        raise FileNotFoundError(f"Data directory not found: {args.data_dir}")
-    os.makedirs(args.output_dir, exist_ok=True)
+    # Use config defaults
+    data_dir = args.data_dir if args.data_dir else config.DATA_DIR
+    output_dir = args.output_dir if args.output_dir else os.path.join(config.FIGURES_DIR, "comparison")
+
+    if not os.path.exists(data_dir):
+        raise FileNotFoundError(f"Data directory not found: {data_dir}")
+    os.makedirs(output_dir, exist_ok=True)
 
     print("=" * 70)
     print("OR FAULT SEVERITY NON-MONOTONICITY ANALYSIS")
     print("=" * 70)
-    print(f"\nData directory: {args.data_dir}")
-    print(f"Output directory: {args.output_dir}\n")
+    print(f"\nData directory: {data_dir}")
+    print(f"Output directory: {output_dir}\n")
 
     # Load data
-    features = load_all_features(args.data_dir)
+    features = load_all_features(data_dir)
 
     # Run analysis
     results = analyze_all(features)
@@ -498,9 +535,9 @@ def main():
     print("\n" + "=" * 70)
     print("GENERATING FIGURES")
     print("=" * 70)
-    plot_main_figure(features, results, args.output_dir)
-    plot_severity_progression(features, args.output_dir)
-    plot_or_detail(features, args.output_dir)
+    plot_main_figure(features, results, output_dir)
+    plot_severity_progression(features, output_dir)
+    plot_or_detail(features, output_dir)
 
     print("\n" + "=" * 70)
     print("ANALYSIS COMPLETE")

@@ -5,17 +5,17 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-import config
-from data import load_data, create_dataloaders, SignalDataset
-from models import create_model, count_parameters
-from training import train, train_kfold_cv
-from evaluation import evaluate, evaluate_noise_robustness
-from experiment import (
+from . import config
+from .data import load_data, create_dataloaders, SignalDataset
+from .models import create_model
+from .training import train, train_kfold_cv
+from .evaluation import evaluate, evaluate_noise_robustness
+from .experiment import (
     get_experiment_dir,
     experiment_exists,
     save_experiment,
 )
-from utils import set_seed, get_device
+from .utils import set_seed, get_device, count_parameters, print_header, print_section, print_separator
 
 
 def run_single_experiment(
@@ -102,7 +102,7 @@ def run_single_experiment(
     
     if use_kfold_cv and not has_val:
         if verbose:
-            print(f"\n--- K-Fold CV for Epoch Selection ({n_folds} folds) ---")
+            print_section(f"K-Fold CV for Epoch Selection ({n_folds} folds)")
         
         # Create training dataset for k-fold CV
         X_train = torch.FloatTensor(data["X_train"])
@@ -132,7 +132,7 @@ def run_single_experiment(
         actual_epochs = kfold_result["optimal_epochs"]
         
         if verbose:
-            print(f"\n--- Retraining on Full Data ({actual_epochs} epochs) ---")
+            print_section(f"Retraining on Full Data ({actual_epochs} epochs)")
         
         # Reset seed and create the model for final training
         set_seed(seed)
@@ -251,10 +251,8 @@ def run_study(
     study = config.STUDIES[study_name]
 
     if verbose:
-        print("=" * 70)
-        print(f"STUDY: {study_name}")
+        print_header(f"STUDY: {study_name}")
         print(f"Description: {study.get('description', '')}")
-        print("=" * 70)
 
     models = study["models"]
     configurations = study["configurations"]
@@ -308,10 +306,9 @@ def run_study(
                     results.append(result)
 
     if verbose:
-        print("\n" + "=" * 70)
-        print(f"STUDY COMPLETE: {study_name}")
+        print()  # Add newline before header
+        print_header(f"STUDY COMPLETE: {study_name}")
         print(f"Total: {total}, New: {len(results)}, Skipped: {skipped}")
-        print("=" * 70)
 
     return results
 

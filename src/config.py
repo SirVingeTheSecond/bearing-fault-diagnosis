@@ -1,18 +1,30 @@
+import os
 
-# Device is determined at runtime to avoid requiring torch at import
+# =============================================================================
+# Project paths
+# =============================================================================
+
+_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(_THIS_DIR)  # Go up from src/ to project root
+
+DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw")
+RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
+FIGURES_DIR = os.path.join(PROJECT_ROOT, "figures")
+
+# =============================================================================
+# Device configuration
+# =============================================================================
+
+# Determined at runtime to avoid requiring torch at import
 DEVICE = None  # Set by get_device() in utils.py
 
 # Seeds for multi-run experiments
-# METHODOLOGY NOTE: Other papers recommend 5-30 seeds for reliability
+# NOTE: Other papers recommend 5-30 seeds for reliability
 # - Benchmark paper: 30 seeds
 # - ECMCTP: 10 experiments averaged
 # - CNN-LSTM: 5-fold CV
 SEEDS = [42, 123, 456, 789, 1024, 2048, 3072, 4096, 5120, 6144]
 DEFAULT_SEED = 42
-
-DATA_DIR = "data/raw"
-RESULTS_DIR = "results"
-FIGURES_DIR = "figures"
 
 # =============================================================================
 # Signal processing
@@ -31,7 +43,7 @@ FEATURE_MODE = "fft"
 
 MOTOR_LOADS = ["1772", "1750", "1730"]
 FAULT_SIZES = ["007", "014", "021"]
-TEST_FAULT_SIZE = "014"  # Held out for generalization test
+TEST_FAULT_SIZE = "014"  # For generalization test
 
 # File mapping: (filename_template, class_name, fault_size, 4class_idx, 10class_idx, multilabel)
 def get_file_mapping(load: str) -> list:
@@ -86,7 +98,7 @@ EARLY_STOPPING_MIN_DELTA = 0.001
 # Studies can be seen declarative specifications of experiments to run.
 # Each study defines what combinations to test.
 #
-# METHODOLOGY NOTE (from other papers):
+# NOTE (from other papers):
 # - For fault_size splits: validation set is empty, no early stopping
 # - Report mean +- std across seeds (the idea is to test the reliability)
 

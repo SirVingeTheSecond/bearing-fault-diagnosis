@@ -4,7 +4,7 @@ from datetime import datetime
 
 import torch
 
-import config
+from . import config
 
 
 def get_experiment_dir(study_name: str, model: str, config_name: str, seed: int) -> str:
@@ -30,14 +30,17 @@ def save_experiment(
     history: dict,
 ):
     """
-    Save all experiments.
+    Save all experiment artifacts.
     
     Creates:
         exp_dir/
             config.json     - Experiment configuration
-            results.json    - Test metrics
+            results.json    - Test metrics (from best model)
             history.json    - Training history
-            model.pth       - Model weights
+            model.pth       - Best model weights (lowest val_loss or train_loss)
+    
+    Note: The model_state should be from the best checkpoint, not final epoch.
+          This is handled by train() which restores best before returning.
     """
     os.makedirs(exp_dir, exist_ok=True)
 
@@ -53,7 +56,7 @@ def save_experiment(
     with open(os.path.join(exp_dir, "history.json"), "w") as f:
         json.dump(history, f, indent=2)
 
-    # Model
+    # Model (best checkpoint)
     torch.save(model_state, os.path.join(exp_dir, "model.pth"))
 
 
