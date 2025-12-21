@@ -58,7 +58,7 @@ def _save_figure(figures_dir: str, name: str):
 
 
 # =============================================================================
-# Basic Plots (Used Standalone)
+# Basic Plots
 # =============================================================================
 
 def plot_training_curves(history: dict, save_path: str = None):
@@ -176,7 +176,7 @@ def fig_model_comparison(stats: dict, figures_dir: str):
                     ha='center', va='bottom', fontsize=8)
 
     plt.tight_layout()
-    _save_figure(figures_dir, "fig1_model_comparison")
+    _save_figure(figures_dir, "fig01_model_comparison")
 
 
 def fig_per_class_performance(stats: dict, figures_dir: str):
@@ -218,7 +218,7 @@ def fig_per_class_performance(stats: dict, figures_dir: str):
     ax.legend(loc='upper right')
 
     plt.tight_layout()
-    _save_figure(figures_dir, "fig2_per_class_performance")
+    _save_figure(figures_dir, "fig02_per_class_performance")
 
 
 def fig_split_comparison(stats: dict, figures_dir: str):
@@ -261,7 +261,7 @@ def fig_split_comparison(stats: dict, figures_dir: str):
                     bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.5))
 
     plt.tight_layout()
-    _save_figure(figures_dir, "fig3_split_comparison")
+    _save_figure(figures_dir, "fig03_split_comparison")
 
 
 def fig_confusion_matrix(study_name: str, figures_dir: str):
@@ -301,7 +301,7 @@ def fig_confusion_matrix(study_name: str, figures_dir: str):
 
     fig.suptitle('CNN on Fault-Size Split', fontsize=12, fontweight='bold')
     plt.tight_layout()
-    _save_figure(figures_dir, "fig4_confusion_matrix")
+    _save_figure(figures_dir, "fig04_confusion_matrix")
 
 
 def fig_training_curves(study_name: str, figures_dir: str):
@@ -325,7 +325,7 @@ def fig_training_curves(study_name: str, figures_dir: str):
         history = json.load(f)
 
     plot_training_curves(history, save_path=os.path.join(figures_dir, "fig5_training_curves.png"))
-    print("  Saved: fig5_training_curves.png")
+    print("  Saved: fig05_training_curves.png")
 
 
 def fig_roc_curves(study_name: str, figures_dir: str):
@@ -370,7 +370,7 @@ def fig_roc_curves(study_name: str, figures_dir: str):
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    _save_figure(figures_dir, "fig6_roc_curves")
+    _save_figure(figures_dir, "fig06_roc_curves")
 
 
 def fig_tsne_visualization(figures_dir: str):
@@ -411,7 +411,7 @@ def fig_tsne_visualization(figures_dir: str):
     ax.legend()
 
     plt.tight_layout()
-    _save_figure(figures_dir, "fig7_tsne_features")
+    _save_figure(figures_dir, "fig07_tsne_features")
 
 
 def fig_signal_examples(figures_dir: str):
@@ -457,7 +457,7 @@ def fig_signal_examples(figures_dir: str):
             axes[i, 1].set_xlabel('Frequency Bin')
 
     plt.tight_layout()
-    _save_figure(figures_dir, "fig8_signal_examples")
+    _save_figure(figures_dir, "fig08_signal_examples")
 
 
 def fig_activation_test(figures_dir: str):
@@ -496,7 +496,7 @@ def fig_activation_test(figures_dir: str):
     ax.axhline(y=means[0], color='green', linestyle='--', linewidth=1, alpha=0.5)
 
     plt.tight_layout()
-    _save_figure(figures_dir, "fig9_activation_comparison")
+    _save_figure(figures_dir, "fig09_activation_comparison")
 
 
 def fig_summary_heatmap(stats: dict, figures_dir: str):
@@ -528,7 +528,7 @@ def fig_summary_heatmap(stats: dict, figures_dir: str):
 
 
 # =============================================================================
-# Main Entry Point
+# Entry point
 # =============================================================================
 
 def generate_all_figures(study_name: str, stats: dict = None):

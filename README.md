@@ -134,7 +134,7 @@ python -m src.main test results/.../model.pth --compare-splits
 
 ## Explanation of Splitting
 
-This is the important part. The split strategy determines what goes in your training set versus your test set:
+This is the important part. The split strategy determines what goes in the training set versus the test set:
 
 | Split | Training Severities | Test Severities | What It Tests |
 |-------|---------------------|-----------------|---------------|

@@ -442,7 +442,7 @@ def plot_severity_progression(features: dict, output_dir: str) -> None:
 
 
 def plot_or_detail(features: dict, output_dir: str) -> None:
-    """Plot detailed OR fault analysis showing unique bin 123 peak."""
+    """Plot OR fault analysis showing unique bin 123 peak."""
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
 
     # Panel A: Low frequency detail (bins 0-200)
