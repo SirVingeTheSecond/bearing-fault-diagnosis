@@ -218,7 +218,7 @@ def print_summary(aggregated: dict):
 
     print(f"\n{'Model':<12} {'Drop':<6} {'Params':<10} "
           f"{'Accuracy':<14} {'Macro F1':<14} {'Ball F1':<14} {'IR F1':<14}")
-    print("-" * 90)
+    print_separator(char="-", width=90)
 
     sorted_keys = sorted(aggregated.keys(), key=lambda k: (k[0], k[1]))
 

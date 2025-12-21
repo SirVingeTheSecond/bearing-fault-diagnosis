@@ -210,7 +210,7 @@ def print_summary(results: list):
     print("SUMMARY")
     print_separator()
     print(f"{'Policy':<12} {'Accuracy (%)':>12} {'Std':>10} {'N':>5}")
-    print("-" * 42)
+    print_separator(char="-", width=42)
 
     summary = []
     for policy, accs in sorted(policy_stats.items()):

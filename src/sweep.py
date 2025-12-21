@@ -8,7 +8,7 @@ import torch
 from . import config
 from .data import load_data, create_dataloaders
 from .models import create_model
-from utils import count_parameters
+from utils import count_parameters, print_separator
 from training import train, get_criterion, train_epoch, evaluate_epoch, EarlyStopping
 from .evaluation import evaluate
 from .utils import set_seed, get_device
@@ -316,7 +316,7 @@ def print_sweep_leaderboard(sweep_name: str, top_n: int = 10):
 
     if passed:
         print(f"\n{'Rank':<5} {'Model':<10} {'LR':<10} {'Dropout':<8} {'WD':<10} {'Score':<10}")
-        print("-" * 60)
+        print_separator(char="-", width=60)
 
         for i, r in enumerate(passed[:top_n], 1):
             params = r["params"]

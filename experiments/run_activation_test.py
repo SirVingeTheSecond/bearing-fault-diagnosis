@@ -66,7 +66,7 @@ def main():
     print("SUMMARY")
     print_separator()
     print(f"{'Activation':<12} {'Accuracy (%)':>12} {'Std':>10}")
-    print("-" * 36)
+    print_separator(char="-", width=36)
 
     for activation, mean, std in sorted(results, key=lambda x: -x[1]):
         print(f"{activation:<12} {mean:>12.2f} {std:>10.2f}")

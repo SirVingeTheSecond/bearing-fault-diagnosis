@@ -17,6 +17,8 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
+from src.utils import print_header, print_separator
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src import config
@@ -203,12 +205,10 @@ def analyze_all(features: dict) -> dict:
 
 def print_results(results: dict) -> None:
     """Print analysis results to console."""
-    print("\n" + "=" * 70)
-    print("MONOTONICITY ANALYSIS")
-    print("=" * 70)
-    print("\nRatio = (d_007_014 + d_014_021) / d_007_021")
+    print_header("MONOTONICITY ANALYSIS")
+    print("Ratio = (d_007_014 + d_014_021) / d_007_021")
     print("Ratio ~ 1.0: monotonic | Ratio >> 1.0: non-monotonic")
-    print("-" * 70)
+    print_separator(char="-")
 
     for fault_type in FAULT_TYPES:
         r = results['monotonicity'][fault_type]
@@ -218,9 +218,7 @@ def print_results(results: dict) -> None:
         print(f"  d(007, 021) = {r['d_007_021']:.2f}")
         print(f"  Ratio: {r['ratio']:.3f}")
 
-    print("\n" + "=" * 70)
-    print("CROSS-CLASS DISTANCES FROM OR_014")
-    print("=" * 70)
+    print_header("CROSS-CLASS DISTANCES FROM OR_014")
     sorted_dist = sorted(results['cross_class'].items(), key=lambda x: x[1])
     for name, dist in sorted_dist:
         marker = ""
@@ -518,10 +516,8 @@ def main():
         raise FileNotFoundError(f"Data directory not found: {data_dir}")
     os.makedirs(output_dir, exist_ok=True)
 
-    print("=" * 70)
-    print("OR FAULT SEVERITY NON-MONOTONICITY ANALYSIS")
-    print("=" * 70)
-    print(f"\nData directory: {data_dir}")
+    print_header("OR FAULT SEVERITY NON-MONOTONICITY ANALYSIS")
+    print(f"Data directory: {data_dir}")
     print(f"Output directory: {output_dir}\n")
 
     # Load data
@@ -532,16 +528,12 @@ def main():
     print_results(results)
 
     # Generate plots
-    print("\n" + "=" * 70)
-    print("GENERATING FIGURES")
-    print("=" * 70)
+    print_header("GENERATING FIGURES")
     plot_main_figure(features, results, output_dir)
     plot_severity_progression(features, output_dir)
     plot_or_detail(features, output_dir)
 
-    print("\n" + "=" * 70)
-    print("ANALYSIS COMPLETE")
-    print("=" * 70)
+    print_header("ANALYSIS COMPLETE")
 
 
 if __name__ == "__main__":
