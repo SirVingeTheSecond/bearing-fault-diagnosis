@@ -1,0 +1,102 @@
+{
+  "model": "cnnlstm",
+  "mode": "4class",
+  "split": "fault_size_all_loads",
+  "seed": 789,
+  "parameters": 711876,
+  "epochs_trained": 10,
+  "best_val_acc": 1.0,
+  "best_epoch": 10,
+  "test_metrics": {
+    "accuracy": 0.5916073435743724,
+    "macro_precision": 0.5935458635187139,
+    "macro_recall": 0.6125447050978966,
+    "macro_f1": 0.5468979684290278,
+    "macro_auroc": 0.7454925373299994,
+    "per_class_metrics": {
+      "Normal": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 558
+      },
+      "Ball": {
+        "precision": 0.39247613700168443,
+        "recall": 0.9914893617021276,
+        "f1": 0.5623491552695092,
+        "support": 705
+      },
+      "IR": {
+        "precision": 0.9817073170731707,
+        "recall": 0.4586894586894587,
+        "f1": 0.625242718446602,
+        "support": 702
+      },
+      "OR": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 704
+      }
+    },
+    "confusion_matrix": [
+      [
+        558,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        699,
+        6,
+        0
+      ],
+      [
+        0,
+        378,
+        322,
+        2
+      ],
+      [
+        0,
+        704,
+        0,
+        0
+      ]
+    ]
+  },
+  "noise_robustness": null,
+  "kfold_cv": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "best_val_acc": 1.0,
+        "best_epoch": 7,
+        "epochs_trained": 22,
+        "final_val_loss": 1.136858453926765e-07
+      },
+      {
+        "fold": 2,
+        "best_val_acc": 1.0,
+        "best_epoch": 4,
+        "epochs_trained": 19,
+        "final_val_loss": 0.0
+      },
+      {
+        "fold": 3,
+        "best_val_acc": 1.0,
+        "best_epoch": 3,
+        "epochs_trained": 20,
+        "final_val_loss": 7.715805839832282e-10
+      }
+    ],
+    "mean_val_acc": 1.0,
+    "std_val_acc": 0.0,
+    "mean_best_epoch": 4.666666666666667,
+    "median_best_epoch": 4,
+    "optimal_epochs": 10,
+    "n_folds": 3
+  },
+  "timestamp": "2025-12-22T22:37:03.187404"
+}

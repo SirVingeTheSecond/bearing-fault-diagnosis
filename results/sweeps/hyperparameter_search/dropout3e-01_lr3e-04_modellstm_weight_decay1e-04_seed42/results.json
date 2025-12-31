@@ -1,0 +1,75 @@
+{
+  "params": {
+    "model": "lstm",
+    "lr": 0.0003,
+    "dropout": 0.3,
+    "weight_decay": 0.0001
+  },
+  "screening_acc": 1.0,
+  "passed_screening": true,
+  "has_validation": false,
+  "best_val_acc": 1.0,
+  "best_epoch": 10,
+  "epochs_trained": 10,
+  "test_metrics": {
+    "accuracy": 0.514050206069689,
+    "macro_precision": 0.5717833753148615,
+    "macro_recall": 0.5388297872340425,
+    "macro_f1": 0.4502915091498362,
+    "macro_auroc": 0.7695486461428287,
+    "per_class_metrics": {
+      "Normal": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 558
+      },
+      "Ball": {
+        "precision": 0.35113350125944587,
+        "recall": 0.9886524822695035,
+        "f1": 0.5182156133828997,
+        "support": 705
+      },
+      "IR": {
+        "precision": 0.936,
+        "recall": 0.16666666666666666,
+        "f1": 0.282950423216445,
+        "support": 702
+      },
+      "OR": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 704
+      }
+    },
+    "confusion_matrix": [
+      [
+        558,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        697,
+        8,
+        0
+      ],
+      [
+        0,
+        584,
+        117,
+        1
+      ],
+      [
+        0,
+        704,
+        0,
+        0
+      ]
+    ]
+  },
+  "seed": 42,
+  "timestamp": "2025-12-22T17:16:15.245271"
+}

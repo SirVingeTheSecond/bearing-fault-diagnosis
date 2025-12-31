@@ -1,0 +1,75 @@
+{
+  "params": {
+    "model": "cnn",
+    "lr": 0.0005,
+    "dropout": 0.2,
+    "weight_decay": 1e-05
+  },
+  "screening_acc": 0.9998458930497766,
+  "passed_screening": true,
+  "has_validation": false,
+  "best_val_acc": 1.0,
+  "best_epoch": 14,
+  "epochs_trained": 14,
+  "test_metrics": {
+    "accuracy": 0.6627950543274634,
+    "macro_precision": 0.5578081912021383,
+    "macro_recall": 0.6803494574771171,
+    "macro_f1": 0.6073577561272818,
+    "macro_auroc": 0.8165181560352622,
+    "per_class_metrics": {
+      "Normal": {
+        "precision": 0.9911190053285968,
+        "recall": 1.0,
+        "f1": 0.9955396966993756,
+        "support": 558
+      },
+      "Ball": {
+        "precision": 0.7112676056338029,
+        "recall": 0.8595744680851064,
+        "f1": 0.7784200385356455,
+        "support": 705
+      },
+      "IR": {
+        "precision": 0.5288461538461539,
+        "recall": 0.8618233618233618,
+        "f1": 0.6554712892741061,
+        "support": 702
+      },
+      "OR": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 704
+      }
+    },
+    "confusion_matrix": [
+      [
+        558,
+        0,
+        0,
+        0
+      ],
+      [
+        5,
+        606,
+        77,
+        17
+      ],
+      [
+        0,
+        4,
+        605,
+        93
+      ],
+      [
+        0,
+        242,
+        462,
+        0
+      ]
+    ]
+  },
+  "seed": 42,
+  "timestamp": "2025-12-22T16:25:22.750657"
+}

@@ -240,7 +240,6 @@ All figures are saved as both PNG and PDF for convenience.
 All hyperparameters and study definitions live in `src/config.py`:
 
 ```python
-# Key settings
 WINDOW_SIZE = 2048      # Samples per window
 STRIDE = 512            # Window overlap
 BATCH_SIZE = 64
@@ -251,12 +250,3 @@ PATIENCE = 15           # Early stopping patience
 ```
 
 To add a new study, just define it in the `STUDIES` dict in config.py and run it with `python -m src.main run <study_name>`.
-
-## Future Work
-
-Some ideas if you want to extend this:
-
-1. **Domain adaptation** to train on one load, test on another, and use techniques like DANN to bridge the gap.
-2. **Better OR fault handling** since OR might need a different feature representation or domain specific augmentation.
-3. **Transformer architectures** because attention might help with the non monotonic severity patterns.
-4. **Uncertainty quantification** to know when the model does not know.

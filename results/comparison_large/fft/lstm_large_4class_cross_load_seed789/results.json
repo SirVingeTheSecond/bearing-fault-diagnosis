@@ -1,0 +1,72 @@
+{
+  "model": "lstm_large",
+  "mode": "4class",
+  "split": "cross_load",
+  "seed": 789,
+  "parameters": 3900868,
+  "epochs_trained": 24,
+  "best_val_acc": 0.9991408934707904,
+  "best_epoch": 5,
+  "test_metrics": {
+    "accuracy": 0.9973864750081672,
+    "macro_precision": 0.997168627119122,
+    "macro_recall": 0.997164120847283,
+    "macro_f1": 0.9971656201961264,
+    "macro_auroc": 0.9999887217886891,
+    "per_class_metrics": {
+      "Normal": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 945
+      },
+      "Ball": {
+        "precision": 0.9985754985754985,
+        "recall": 0.9957386363636364,
+        "f1": 0.9971550497866287,
+        "support": 704
+      },
+      "IR": {
+        "precision": 0.9943422913719944,
+        "recall": 0.9957507082152974,
+        "f1": 0.9950460014154282,
+        "support": 706
+      },
+      "OR": {
+        "precision": 0.9957567185289957,
+        "recall": 0.9971671388101983,
+        "f1": 0.9964614295824487,
+        "support": 706
+      }
+    },
+    "confusion_matrix": [
+      [
+        945,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        701,
+        3,
+        0
+      ],
+      [
+        0,
+        0,
+        703,
+        3
+      ],
+      [
+        0,
+        1,
+        1,
+        704
+      ]
+    ]
+  },
+  "noise_robustness": null,
+  "kfold_cv": null,
+  "timestamp": "2025-12-30T19:21:06.401949"
+}

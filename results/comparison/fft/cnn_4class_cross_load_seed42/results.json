@@ -1,0 +1,72 @@
+{
+  "model": "cnn",
+  "mode": "4class",
+  "split": "cross_load",
+  "seed": 42,
+  "parameters": 44228,
+  "epochs_trained": 47,
+  "best_val_acc": 1.0,
+  "best_epoch": 32,
+  "test_metrics": {
+    "accuracy": 0.9937928781443972,
+    "macro_precision": 0.993448275862069,
+    "macro_recall": 0.9932689367113057,
+    "macro_f1": 0.9932815055649825,
+    "macro_auroc": 0.9999769942801464,
+    "per_class_metrics": {
+      "Normal": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 945
+      },
+      "Ball": {
+        "precision": 1.0,
+        "recall": 0.9957386363636364,
+        "f1": 0.997864768683274,
+        "support": 704
+      },
+      "IR": {
+        "precision": 0.9737931034482759,
+        "recall": 1.0,
+        "f1": 0.986722571628232,
+        "support": 706
+      },
+      "OR": {
+        "precision": 1.0,
+        "recall": 0.9773371104815864,
+        "f1": 0.9885386819484241,
+        "support": 706
+      }
+    },
+    "confusion_matrix": [
+      [
+        945,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        701,
+        3,
+        0
+      ],
+      [
+        0,
+        0,
+        706,
+        0
+      ],
+      [
+        0,
+        0,
+        16,
+        690
+      ]
+    ]
+  },
+  "noise_robustness": null,
+  "kfold_cv": null,
+  "timestamp": "2025-12-22T22:11:41.945093"
+}

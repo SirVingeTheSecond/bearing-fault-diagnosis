@@ -1,0 +1,72 @@
+{
+  "model": "lstm_large",
+  "mode": "4class",
+  "split": "cross_load",
+  "seed": 42,
+  "parameters": 3900868,
+  "epochs_trained": 22,
+  "best_val_acc": 1.0,
+  "best_epoch": 5,
+  "test_metrics": {
+    "accuracy": 0.8703038222803006,
+    "macro_precision": 0.9066177073327453,
+    "macro_recall": 0.8594142335178986,
+    "macro_f1": 0.8478871587448755,
+    "macro_auroc": 0.9748163981524613,
+    "per_class_metrics": {
+      "Normal": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 945
+      },
+      "Ball": {
+        "precision": 0.9985714285714286,
+        "recall": 0.9928977272727273,
+        "f1": 0.9957264957264957,
+        "support": 704
+      },
+      "IR": {
+        "precision": 0.9843260188087775,
+        "recall": 0.4447592067988669,
+        "f1": 0.6126829268292683,
+        "support": 706
+      },
+      "OR": {
+        "precision": 0.6435733819507748,
+        "recall": 1.0,
+        "f1": 0.7831392124237382,
+        "support": 706
+      }
+    },
+    "confusion_matrix": [
+      [
+        945,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        699,
+        5,
+        0
+      ],
+      [
+        0,
+        1,
+        314,
+        391
+      ],
+      [
+        0,
+        0,
+        0,
+        706
+      ]
+    ]
+  },
+  "noise_robustness": null,
+  "kfold_cv": null,
+  "timestamp": "2025-12-30T19:18:09.025012"
+}
