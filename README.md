@@ -4,7 +4,7 @@ A deep learning project for diagnosing bearing faults using vibration signals fr
 
 ## What this Project is about
 
-Bearings are everywhere. Motors, turbines, conveyor belts, you name it. When they fail, things break down, and that costs money (and sometimes safety). The idea here is to use vibration signals to detect and classify bearing faults *before* catastrophic failure.
+Bearings are everywhere. Motors, turbines, conveyor belts, you name it. When they fail, things break down and that costs money (and sometimes safety). The idea here is to use vibration signals to detect and classify bearing faults *before* catastrophic failure.
 
 The CWRU dataset is the go to benchmark for this task. It contains vibration recordings from bearings with different fault types (ball, inner race, outer race) at different severity levels (0.007", 0.014", 0.021" fault diameter).
 
@@ -28,7 +28,7 @@ Here is what has been found after running 90 experiments across different models
 * OR (outer race) fault completely fails with 0% recall on fault size split. The model literally cannot recognize OR faults it has not seen before.
 * CNN beats LSTM and CNN LSTM on the realistic split. Simpler models generalize better when the task is hard.
 * Ball fault is most robust and works well across all models (89 to 99% recall).
-* GELU activation slightly outperforms ReLU** (67.4% vs 66.4%).
+* GELU activation slightly outperforms ReLU (67.4% vs 66.4%).
 
 ## Setup
 
@@ -64,7 +64,7 @@ The numbers (1772, 1750, 1730) represent motor RPM and load conditions where low
 
 ## How to use
 
-Everything goes through the CLI at `python -m src.main`. Here is the workflow:
+The idea is everything goes through `python -m src.main`. The philosohpy of the workflow can be interpreted given the following reading.
 
 ### Quick Start: Run a Single Experiment
 
@@ -91,18 +91,18 @@ python -m src.main figures comparison
 
 ### Commands
 
-| Command | What it does                                                   |
-|---------|----------------------------------------------------------------|
-| `list` | Show available studies and sweeps                              |
-| `run <study>` | Run all experiments in a study                                 |
-| `status <study>` | Show completion progress                                       |
-| `analyze <study>` | Print aggregated results with statistics                       |
-| `figures <study>` | Generate all figures                                           |
-| `export <study>` | Export results to CSV, Typst, or JSON (the purpose of this).   |
+| Command | What it does |
+|---------|--------------|
+| `list` | Show available studies and sweeps |
+| `run <study>` | Run all experiments in a study |
+| `status <study>` | Show completion progress |
+| `analyze <study>` | Print aggregated results with corresponding statistics |
+| `figures <study>` | Generate all figures |
+| `export <study>` | Export results to CSV or JSON |
 | `train` | Run a single specific experiment where you give the parameters |
-| `test <checkpoint>` | Evaluate a saved model checkpoint                              |
-| `sweep <sweep>` | Run a hyperparameter search                                    |
-| `sweep results <sweep>` | Show the searches in a ranked order                            |
+| `test <checkpoint>` | Evaluate a saved model checkpoint |
+| `sweep <sweep>` | Run a hyperparameter search |
+| `sweep results <sweep>` | Show the searches in a ranked order |
 
 ### Options for `train`
 
@@ -131,7 +131,7 @@ python -m src.main test results/.../model.pth --compare-splits
 
 ## Explanation of Splitting
 
-This is the important part. The split strategy determines what goes in the training set versus the test set:
+This is the important part. The split strategy determines what goes in the training set vs. the test set:
 
 | Split | Training Severities | Test Severities | What It Tests |
 |-------|---------------------|-----------------|---------------|
@@ -158,7 +158,7 @@ Beyond the main comparison study, there are scripts for specific analyses:
 
 ### Testing Activation Functions
 
-It seems like GELU and ReLU are the best performing although this has not been proven empirically. The paper uses GELU as standard.
+Although GELU and ReLU appear to perform well in this project, this has not been verified through empirical data. It is also worth noting that each model (particularly the LSTM) was evaluated using only a single, fixed activation function. No experiments were conducted to assess the impact of varying activation functions within the same model. For consistency, GELU is used as the default activation function throughout the project, as it showed a slightly better performance than ReLU in the observed results.
 
 For testing ReLU, Leaky ReLU, GELU, ELU, and SELU:
 
@@ -197,7 +197,7 @@ This help visualize that OR fault severities do not follow a monotonic progressi
 
 ## Understanding the Results
 
-After running `python -m src.main analyze comparison`, this is the most likely output:
+After running `python -m src.main analyze comparison`, the following could be a potential output:
 
 ```
 ================================================================================
@@ -237,7 +237,7 @@ All figures are saved as both PNG and PDF for convenience.
 
 ## Configuration
 
-All hyperparameters and study definitions live in `src/config.py`:
+All hyperparameters and study definitions can be found in `src/config.py`:
 
 ```python
 WINDOW_SIZE = 2048      # Samples per window
